@@ -1,9 +1,11 @@
 const Display = (path: string) => {
+    console.log("path before");
+    console.log(path); 
     const x = JSON.stringify(path);
     return (
         <div>
             <p>path: {x}</p>
-            <img src={path} alt="secondaryImage" />
+            <img src={x} alt="secondaryImage" />
         </div>
     );
 }

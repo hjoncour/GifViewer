@@ -1,15 +1,27 @@
 import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
+import { open } from '@tauri-apps/api/dialog';
+import { readTextFile } from '@tauri-apps/api/fs';
 
 import './styles/App.css';
-import Display from './components/Display';
-import gif from './assets/images/gif/fire.gif';
 
 function App() {
 
-  const [pathMsg, setPath] = useState("");                  // path to app
-  const [defaultImage, getImage] = useState("");            // absolute path to image
-  const [secondaryImage, getSecondaryImage] = useState(""); // relative path to image
+  const [pathMsg, setPath] = useState("");                    // path to app
+  const [defaultImage, getImage] = useState("");              // absolute path to image
+  const [secondaryImage, getSecondaryImage] = useState("");   // relative path to image
+
+  const readFileContents = async () => {
+    try {
+      const selectedPath = await open({multiple: false, title: 'Open Text File'});
+      console.log(selectedPath);
+      if(!selectedPath) return;
+      const testImg = require(selectedPath as string);
+      return <img src={testImg}></img>
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   async function get_path() {
     setPath(await invoke("path"));
@@ -21,13 +33,12 @@ function App() {
   
   async function get_relative_path_image() {
     getSecondaryImage(await invoke("relative_path_image"));
-  }
-  
 
+  }
 
   return (
     <div className="container">
-      <Display path={secondaryImage}></Display>
+{/*       <Display path={secondaryImage} /> */}
       <div className="row">
         <div>
           <button type="button" onClick={() => get_path()}>
@@ -42,7 +53,12 @@ function App() {
         </div>
       </div>
       <div>
+        <p>pathMsg</p>
         <p>{pathMsg}</p>
+      </div>
+      <div>
+        <p>NEW BUTTON</p>
+        <button type="button" onClick={() => readFileContents()}> READ FILE CONTENTS </button>
       </div>
       <div>
         <p>default Image</p>
@@ -50,13 +66,9 @@ function App() {
         <img src={defaultImage} />
       </div>
       <div>
-        <p>Relative path</p>
+        <p>secondaryImage</p>
         <p>{secondaryImage}</p>
         <img src={secondaryImage} />
-      </div>
-      <div>
-        <p>Safe test</p>
-        <img src={gif} />
       </div>
     </div>
   );

@@ -8,6 +8,9 @@
 /* IMPORTS */
 
 use std::env; 
+use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
+
+
 
 /* COMMANDS */      // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 
@@ -20,7 +23,7 @@ fn path() -> String {
 #[tauri::command]
 fn default_image() -> String {
     println!("REQUEST DEFAULT IMAGE"); // direct path
-    return format!("/Users/hjoncour/Desktop/perso/test_rust/project00/src/assets/images/gif/fire.gif");
+    return format!("/Users/hugo/Desktop/GifViewer/src/assets/images/gif/fire.gif");
 }
 
 #[tauri::command]
