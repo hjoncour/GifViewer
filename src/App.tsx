@@ -1,74 +1,76 @@
 import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
-import { open } from '@tauri-apps/api/dialog';
-import { readTextFile } from '@tauri-apps/api/fs';
+import { open } from '@tauri-apps/api/dialog';
 
 import './styles/App.css';
 
 function App() {
 
-  const [pathMsg, setPath] = useState("");                    // path to app
-  const [defaultImage, getImage] = useState("");              // absolute path to image
-  const [secondaryImage, getSecondaryImage] = useState("");   // relative path to image
+  const [imgSrc, setImgSrc] = useState("");               // Store the image source URL
+  const [errorMessage, setErrorMessage] = useState("");   // Store error messages
 
   const readFileContents = async () => {
+    console.log("called");
     try {
       const selectedPath = await open({multiple: false, title: 'Open Text File'});
       console.log(selectedPath);
-      if(!selectedPath) return;
-      const testImg = require(selectedPath as string);
-      return <img src={testImg}></img>
+      if(!selectedPath){
+        return;
+      } else {
+        return selectedPath as string;
+      }
     } catch (error) {
       console.log(error);
     }
   };
 
-  async function get_path() {
-    setPath(await invoke("path"));
+  function displayGif(base64Data: string) {
+    try {
+      const binaryData = atob(base64Data);
+      const arrayBuffer = new ArrayBuffer(binaryData.length);
+      const uint8Array = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < binaryData.length; i++) {
+        uint8Array[i] = binaryData.charCodeAt(i);
+      }
+
+      const blob = new Blob([uint8Array], { type: 'image/gif' });
+      const url = URL.createObjectURL(blob);
+
+      // Set the image source
+      setImgSrc(url);
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("Failed to display the GIF.");
+    }
   }
 
-  async function get_default_image() {
-    getImage(await invoke("default_image"));
-  }
-  
-  async function get_relative_path_image() {
-    getSecondaryImage(await invoke("relative_path_image"));
+  const getGif = async () => {
+    const path = await readFileContents();
+    if (path) {
+      try {
+        const base64Data = await getBase64(path);
+        console.log('base64Data:');
+        console.log(base64Data);
+        displayGif(base64Data);
+      } catch (error) {
+        console.error(error);
+        setErrorMessage("Failed to decode the GIF.");
+      }
+    } else {
+      setErrorMessage("No file selected.");
+    }
+  };
 
+  async function getBase64(path: string) {
+    const base64Data: string = await invoke('get_base64', { path });
+    return base64Data;
   }
 
   return (
     <div className="container">
-{/*       <Display path={secondaryImage} /> */}
-      <div className="row">
-        <div>
-          <button type="button" onClick={() => get_path()}>
-            GET PATH
-          </button>
-          <button type="button" onClick={() => get_default_image()}>
-            GET DEFAULT IMAGE
-          </button>
-          <button type="button" onClick={() => get_relative_path_image()}>
-            GET SECONDARY IMAGE
-          </button>
-        </div>
-      </div>
-      <div>
-        <p>pathMsg</p>
-        <p>{pathMsg}</p>
-      </div>
       <div>
         <p>NEW BUTTON</p>
-        <button type="button" onClick={() => readFileContents()}> READ FILE CONTENTS </button>
-      </div>
-      <div>
-        <p>default Image</p>
-        <p>{defaultImage}</p>
-        <img src={defaultImage} />
-      </div>
-      <div>
-        <p>secondaryImage</p>
-        <p>{secondaryImage}</p>
-        <img src={secondaryImage} />
+        <button type="button" onClick={() => getGif()}> READ FILE CONTENTS </button>
       </div>
     </div>
   );
