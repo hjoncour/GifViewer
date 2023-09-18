@@ -1,55 +1,69 @@
 /* ATTRIBUTES */
 
-#![cfg_attr(
-    all(not(debug_assertions), target_os = "windows"),
-    windows_subsystem = "windows"
-)]
-
 /* IMPORTS */
 
 use std::env; 
-use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
+use std::fs::File;
+use std::io::{self, Read, Write};
+use base64::{URL_SAFE, encode_config, decode};
 
-
+// use tauri::{CustomMenuItem, Menu, MenuItem, Submenu}; // for later
 
 /* COMMANDS */      // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 
 #[tauri::command]
-fn path() -> String {
-    println!("REQUESTED PATH");
-    return format!("path: {:?}", env::current_dir());
+fn get_base64(path: String) -> String {
+    println!("get_base64(path: String)");
+    println!("---");
+    println!("{}", path);
+
+    let mut file: File = File::open(path).expect("Failed to open file");
+    let mut buffer: Vec<u8> = Vec::new();
+    file.read_to_end(&mut buffer).expect("Failed to read file");
+
+    let x: String = encode_config(&buffer, URL_SAFE);
+    create_test(&x);
+    println!("{}: ", &x);
+    return x;
 }
 
-#[tauri::command]
-fn default_image() -> String {
-    println!("REQUEST DEFAULT IMAGE"); // direct path
-    return format!("/Users/hugo/Desktop/GifViewer/src/assets/images/gif/fire.gif");
+fn create_test(base64_string: &String) -> io::Result<()> {
+    println!("creating test file");
+    let file_path = "/Users/hugo/Desktop/GifViewer/test/test.gif"; // Replace with your absolute file path
+
+    // Create or open the file for writing
+    let mut file = match File::create(file_path) {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("Error creating file: {}", e);
+            return Err(e);
+        }
+    };
+
+    // Your String to be written to the file
+    let content_to_write: &String = base64_string;
+
+    // Convert the String into bytes (UTF-8 encoding in this example)
+    let content_bytes = content_to_write.as_bytes();
+
+    // Write the bytes to the file
+    match file.write_all(content_bytes) {
+        Ok(()) => {
+            println!("Data written successfully.");
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("Error writing to file: {}", e);
+            Err(e)
+        }
+    }
 }
-
-#[tauri::command]
-fn relative_path_image() -> String {
-    println!("REQUEST RELATIVE PATH TO IMAGE"); // relative path
-    let path = &env::current_dir().unwrap().as_path().display().to_string();
-    let new_path = format_path(path.to_string());
-    let result = format!("{}src/assets/images/gif/not_default.gif", new_path);
-    println!("{}", new_path);
-    return result;
-}
-
-/* FUNCTIONS */
-
-fn format_path(path: String) -> String {
-    let index: usize = path.find("src-tauri").unwrap();
-    let new_path = &path[..index];
-    return new_path.to_string();
-}
-
 
 /* MAIN */
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![path, relative_path_image, default_image])
+        .invoke_handler(tauri::generate_handler![get_base64])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
