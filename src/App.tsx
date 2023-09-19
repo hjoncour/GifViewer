@@ -6,21 +6,20 @@ import './styles/App.css';
 
 function App() {
 
-  const [imgSrc, setImgSrc] = useState("");               // Store the image source URL
-  const [errorMessage, setErrorMessage] = useState("");   // Store error messages
+  const [imgSrc, setImgSrc] = useState("");                 // Store the image source URL
+  const [errorMessage, setErrorMessage] = useState("");     // Store error messages
 
   const readFileContents = async () => {
-    console.log("called");
     try {
-      const selectedPath = await open({multiple: false, title: 'Open Text File'});
-      console.log(selectedPath);
-      if(!selectedPath){
-        return;
+      const selectedPath = await open({ multiple: false, title: 'Open Text File' });
+      if (!selectedPath) {
+        return null;
       } else {
         return selectedPath as string;
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      return null;
     }
   };
 
@@ -49,8 +48,6 @@ function App() {
     if (path) {
       try {
         const base64Data = await getBase64(path);
-        console.log('base64Data:');
-        console.log(base64Data);
         displayGif(base64Data);
       } catch (error) {
         console.error(error);
@@ -72,6 +69,18 @@ function App() {
         <p>NEW BUTTON</p>
         <button type="button" onClick={() => getGif()}> READ FILE CONTENTS </button>
       </div>
+      {imgSrc && (
+        <div>
+          <p>Decoded GIF:</p>
+          <img src={imgSrc} alt="Decoded GIF" />
+        </div>
+      )}
+      {errorMessage && (
+        <div>
+          <p>Error:</p>
+          <p>{errorMessage}</p>
+        </div>
+      )}
     </div>
   );
 }
