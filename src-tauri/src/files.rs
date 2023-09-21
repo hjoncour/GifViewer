@@ -4,7 +4,6 @@ use std::{fs, collections::HashMap};
 use crate::Multimedia;
 
 pub fn list_files(dir: &std::path::Path, extensions: Vec<&str>) -> Vec<Multimedia> {
-    // Read the contents of the directory
     let mut files: Vec<Multimedia> = vec![];
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries {
@@ -12,8 +11,6 @@ pub fn list_files(dir: &std::path::Path, extensions: Vec<&str>) -> Vec<Multimedi
                 let path: std::path::PathBuf = entry.path();
                 if path.is_file() {
                     if let Some(multimedia) = get_multimedia_info(&path, &extensions) {
-                        // If multimedia information is available, print path and push it to the vector
-                        println!("{}", path.display());
                         files.push(multimedia);
                     }
                 }
@@ -32,20 +29,19 @@ fn get_multimedia_info(file: &std::path::PathBuf, types: &[&str]) -> Option<Mult
     
     for format in types {
         if let Some(last_slash_index) = input_str.rfind('/') {
-            let substring = &input_str[last_slash_index + 1..];
+            let substring: &str = &input_str[last_slash_index + 1..];
             if substring.contains(format) {
                 if let Ok(metadata) = fs::metadata(file) {
-                    let multimedia = Multimedia {
-                        title: String::new(),  // Initialize with appropriate values
-                        description: String::new(),
-                        author: String::new(),
-                        created_at: String::new(),
+                    //println!("{:#?}", metadata);
+                    let multimedia: Multimedia = Multimedia {
+                        name: substring.to_string(),
+                        description: String::from("placeholder"),
+                        author: String::from("placeholder"),
                         format: format.to_string(),
-                        dimensions: (0, 0),  // Initialize with appropriate values
-                        duration: None,
+                        dimensions: (0, 0),
                         size_bytes: metadata.len(),
-                        metadata: HashMap::new(),  // Initialize with appropriate values
-                        content: Vec::new(),  // Initialize with appropriate values
+                        metadata: HashMap::new(),
+                        content: Vec::new(),
                     };
                     return Some(multimedia);
                 }

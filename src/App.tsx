@@ -82,8 +82,10 @@ function App() {
       console.log('previous-item event emitted');
     };
 
-    const nextItemListener = () => {
+    const nextItemListener = async () => {
       console.log('next-item event emitted');
+      const next: string = await invoke('next', {path: 'str', index: 0});
+      return "...";
     };
 
     const firstItemListener = () => {
@@ -94,13 +96,13 @@ function App() {
       console.log('last-item event emitted');
     };
 
-    appWindow.listen('new-content',   newContentListener);
-    appWindow.listen('open-file',     openFileListener);
-    appWindow.listen('save-file',     saveItemListener);
+    appWindow.listen('new-content', newContentListener);
+    appWindow.listen('open-file', openFileListener);
+    appWindow.listen('save-file', saveItemListener);
     appWindow.listen('previous-item', previousItemListener);
-    appWindow.listen('next-item',     nextItemListener);
-    appWindow.listen('first-item',    firstItemListener);
-    appWindow.listen('last-item',     lastItemListener);
+    appWindow.listen('next-item', nextItemListener);
+    appWindow.listen('first-item', firstItemListener);
+    appWindow.listen('last-item', lastItemListener);
   }, []);
 
   return (
