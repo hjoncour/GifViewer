@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { open } from '@tauri-apps/api/dialog';
+import { listen } from '@tauri-apps/api/event'
+import { appWindow, WebviewWindow } from '@tauri-apps/api/window'
 
 import './styles/App.css';
 
@@ -62,6 +64,44 @@ function App() {
     const base64Data: string = await invoke('get_base64', { path });
     return base64Data;
   }
+
+  useEffect(() => {
+    const newContentListener = () => {
+      console.log('new-content event emitted');
+    };
+
+    const openFileListener = async () => {
+      console.log('open-file event emitted');
+    };
+
+    const saveItemListener = () => {
+      console.log('save-file event emitted');
+    };
+
+    const previousItemListener = () => {
+      console.log('previous-item event emitted');
+    };
+
+    const nextItemListener = () => {
+      console.log('next-item event emitted');
+    };
+
+    const firstItemListener = () => {
+      console.log('first-item event emitted');
+    };
+
+    const lastItemListener = () => {
+      console.log('last-item event emitted');
+    };
+
+    appWindow.listen('new-content',   newContentListener);
+    appWindow.listen('open-file',     openFileListener);
+    appWindow.listen('save-file',     saveItemListener);
+    appWindow.listen('previous-item', previousItemListener);
+    appWindow.listen('next-item',     nextItemListener);
+    appWindow.listen('first-item',    firstItemListener);
+    appWindow.listen('last-item',     lastItemListener);
+  }, []);
 
   return (
     <div className="container">
