@@ -1,4 +1,5 @@
 /* ATTRIBUTES */
+
 #![cfg_attr(
     all(not(debug_assertions), target_os = "windows"),
     windows_substystem = "windows"
@@ -6,19 +7,20 @@
 
 /* IMPORTS */
 
-
-
 extern crate base64;
+mod formats;
+mod menu;
+mod multimedia;
+mod files;
 
+use multimedia::Multimedia;
 use std::fs::File;
+use std::sync::{Arc, Mutex};
+use std::thread;
 use std::io::{self, Read, Write};
-use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
+use formats::all_file_formats;
 
-
-
-// use tauri::{CustomMenuItem, Menu, MenuItem, Submenu}; // for later
-
-/* COMMANDS */      // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
+/* COMMANDS */
 
 #[tauri::command]
 fn get_base64(path: String) -> String {
@@ -29,67 +31,41 @@ fn get_base64(path: String) -> String {
     return encoded_file;
 }
 
-
-/* MENU */
-
-fn create_app_menu() -> Menu {
-    // here `"quit".to_string()` defines the menu item id, and the second parameter is the menu item label.
-    /*let quit:       CustomMenuItem = CustomMenuItem::new("quit".to_string(), "Quit");
-    let close:      CustomMenuItem = CustomMenuItem::new("close".to_string(), "Close");
-    let open:       CustomMenuItem = CustomMenuItem::new("open".to_string(), "Open...");
-
-    let submenu:    Submenu        = Submenu::new("File", Menu::new()
-                                        .add_item(quit)
-                                        .add_item(close)
-                                        .add_item(open));
-    let menu:       Menu           = Menu::new()
-                                            .add_native_item(MenuItem::Copy)
-                                            .add_item(CustomMenuItem::new("hide", "Hide"))
-                                            .add_submenu(submenu);
-    return menu;
-    */
-    let file_menu: Submenu = Submenu::new("File", Menu::new()
-                                .add_item(CustomMenuItem::new("new".to_string(), "New").accelerator("CmdOrCtrl+N"))
-                                .add_item(CustomMenuItem::new("open".to_string(), "Open").accelerator("CmdOrCtrl+O"))
-                                .add_item(CustomMenuItem::new("save".to_string(), "Save").accelerator("CmdOrCtrl+S")));
-    
-    let view_menu: Submenu = Submenu::new("View", Menu::new()
-                                .add_item(CustomMenuItem::new("previous".to_string(), "Previous").accelerator("CmdOrCtrl+ArrowLeft"))
-                                .add_item(CustomMenuItem::new("next".to_string(), "Next").accelerator("CmdOrCtrl+ArrowRight"))
-                                .add_item(CustomMenuItem::new("first".to_string(), "First").accelerator("CmdOrCtrl+ArrowUp"))
-                                .add_item(CustomMenuItem::new("last".to_string(), "Last").accelerator("CmdOrCtrl+ArrowDown"))
-
-                            );
-
-    let main_menu: Submenu = Submenu::new("App", Menu::new()
-                                .add_native_item(MenuItem::Quit));
-
-                        
-
-    let menu: Menu = Menu::new()
-                                .add_submenu(main_menu)
-                                .add_submenu(file_menu)
-                                .add_submenu(view_menu);
-
-    return menu;
-
-}
-
-
-
 /* MAIN */
 
 fn main() {
 
+    let current_dir: std::path::PathBuf = std::env::current_dir().expect("Failed to get current directory");
+    let result: Arc<Mutex<Vec<Multimedia>>> = Arc::new(Mutex::new(Vec::new()));
+    let result_clone: Arc<Mutex<Vec<Multimedia>>> = Arc::clone(&result);
+
+    let handle: thread::JoinHandle<()> = thread::spawn(move || {
+        let files: Vec<Multimedia> = files::list_files(&current_dir, all_file_formats());
+        let mut result: std::sync::MutexGuard<'_, Vec<Multimedia>> = result_clone.lock().unwrap();
+        result.extend(files);
+    });
+    handle.join().unwrap();
+
+    // Access and iterate through the result vector
+    let result: std::sync::MutexGuard<'_, Vec<Multimedia>> = result.lock().unwrap();
+    for file in &*result {
+        // Do something with each file path (display its content, for example)
+        println!("Watch this struct title: {}", file.title);
+    }
+
+
+
     tauri::Builder::default()
-        .menu(create_app_menu())
+        .menu(menu::create_app_menu())
         .on_menu_event(|event: tauri::WindowMenuEvent|
         match event.menu_item_id() {
             "new"       =>      println!("Placeholder for new"),
-            "open"      =>      println!("Open menu item clicked"),
-            "save"      =>      println!("Save selected item"),
-            "previous"  =>      println!("Previous item"),
-            "next"      =>      println!("Last selected item"),
+            "open"      =>      event.window().emit("open-file", "open").unwrap(),              //println!("Open menu item clicked"),
+            "save"      =>      event.window().emit("save-file", "save").unwrap(),              //println!("Save selected item"),
+            "previous"  =>      event.window().emit("previous-item", "previous").unwrap(),      //println!("Previous item"),
+            "next"      =>      event.window().emit("next-item", "next").unwrap(),              //println!("Last selected item"),
+            "first"     =>      event.window().emit("first-item", "first").unwrap(),            //println!("Last selected item"),
+            "last"      =>      event.window().emit("last-item", "last").unwrap(),              //println!("Last selected item"),
             _           =>      println!("Other")
 
         })
