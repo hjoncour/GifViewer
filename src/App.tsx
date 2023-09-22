@@ -1,13 +1,24 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { open } from '@tauri-apps/api/dialog';
-import { listen } from '@tauri-apps/api/event'
 import { appWindow, WebviewWindow } from '@tauri-apps/api/window'
-
+import { setGlobalState, useGlobalState } from './state/index';
 import './styles/App.css';
+
+let index = 0;
 
 function App() {
 
+  const handleIndex = (e: any) => {
+    setGlobalState("mainIndex", e.target.value)
+  }
+
+  interface NextResponse {
+    index: number;
+    media: string;
+    name: string;
+  }
+  
   const [imgSrc, setImgSrc] = useState("");                 // Store the image source URL
   const [errorMessage, setErrorMessage] = useState("");     // Store error messages
 
@@ -37,7 +48,6 @@ function App() {
       const blob = new Blob([uint8Array], { type: 'image/gif' });
       const url = URL.createObjectURL(blob);
 
-      // Set the image source
       setImgSrc(url);
     } catch (error) {
       console.error(error);
@@ -82,9 +92,30 @@ function App() {
       console.log('previous-item event emitted');
     };
 
-    const nextItemListener = () => {
+    const nextItemListener = async () => {
       console.log('next-item event emitted');
+      const [currentMainIndex, setMainIndex] = useGlobalState("mainIndex"); // Get the current index and its updater
+      console.log(`index before: ${currentMainIndex}`);
+      setMainIndex(currentMainIndex + 1); // Update the index using the updater function
+      console.log(`index sent: ${currentMainIndex}`);
+      const next: NextResponse = await invoke('next', { path: 'str', index: 0 });
+      setMainIndex(next.index); // Update the index with the response
+      console.log(`index returned: ${next.index}`);
+      const media: string = next.media;
+      try {
+        if (media) {
+          console.log('name: ' + next.name);
+          displayGif(media);
+        } else {
+          setErrorMessage("Received invalid GIF data.");
+        }
+      } catch (error) {
+        console.error(error);
+        setErrorMessage("Failed to update the GIF.");
+      }
     };
+    
+    
 
     const firstItemListener = () => {
       console.log('first-item event emitted');

@@ -2474,6 +2474,7 @@ name = "project00"
 version = "0.0.0"
 dependencies = [
  "base64 0.13.1",
+ "lazy_static",
  "serde",
  "serde_json",
  "system-tray",
