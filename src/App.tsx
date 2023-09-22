@@ -2,12 +2,16 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { open } from '@tauri-apps/api/dialog';
 import { appWindow, WebviewWindow } from '@tauri-apps/api/window'
-
+import { setGlobalState, useGlobalState } from './state/index';
 import './styles/App.css';
 
 let index = 0;
 
 function App() {
+
+  const handleIndex = (e: any) => {
+    setGlobalState("mainIndex", e.target.value)
+  }
 
   interface NextResponse {
     index: number;
@@ -90,15 +94,17 @@ function App() {
 
     const nextItemListener = async () => {
       console.log('next-item event emitted');
-      // index++;
-      // console.log(`index sent: ${index}`);
-      const next: NextResponse = await invoke('next', {path: 'str', index: 0});
-      // index = next.index;
-      // console.log(`index returned: ${next.index}`);
+      const [currentMainIndex, setMainIndex] = useGlobalState("mainIndex"); // Get the current index and its updater
+      console.log(`index before: ${currentMainIndex}`);
+      setMainIndex(currentMainIndex + 1); // Update the index using the updater function
+      console.log(`index sent: ${currentMainIndex}`);
+      const next: NextResponse = await invoke('next', { path: 'str', index: 0 });
+      setMainIndex(next.index); // Update the index with the response
+      console.log(`index returned: ${next.index}`);
       const media: string = next.media;
       try {
         if (media) {
-          console.log('name: '+next.name);
+          console.log('name: ' + next.name);
           displayGif(media);
         } else {
           setErrorMessage("Received invalid GIF data.");
@@ -108,6 +114,8 @@ function App() {
         setErrorMessage("Failed to update the GIF.");
       }
     };
+    
+    
 
     const firstItemListener = () => {
       console.log('first-item event emitted');
