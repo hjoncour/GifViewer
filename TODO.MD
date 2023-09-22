@@ -26,3 +26,8 @@ Command + L --> Panel to visualize/scroll
 
 Other:
 - Replace Vector of types by an enum
+- instead of returning base64 data, return the whole gif with metadata, name & title etc;
+
+
+
+selected paths: multiple: can return multiple paths?

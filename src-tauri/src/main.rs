@@ -20,6 +20,7 @@ use multimedia::Multimedia;
 
 extern crate base64;
 use std::sync::LazyLock;
+use serde_json::json;
 
 use std::fs::File;
 use std::sync::{Arc, Mutex};
@@ -30,26 +31,32 @@ use std::io::{Read};
 
 static LOCAL: LazyLock<Arc<Mutex<Vec<Multimedia>>>> = LazyLock::new(|| Arc::new(Mutex::new(Vec::new())));
 
-
 /* COMMANDS */
 
 #[tauri::command]
 fn get_base64(path: String) -> String {
-    let mut file: File = File::open(path).expect("Failed to open file");
-    let mut file_data: Vec<u8> = Vec::new();
-    file.read_to_end(&mut file_data).expect("Failed to read file");
-    let encoded_file: String = base64::encode(&file_data);
-    return encoded_file;
+    files::encode_file(path)
 }
 
 #[tauri::command]
-fn next(path: String, index: u64) -> String {
+fn next(path: String, index: usize) -> serde_json::Value {
     println!("next called");
     let local_files: std::sync::MutexGuard<'_, Vec<Multimedia>> = LOCAL.lock().unwrap();
-    for file in &*local_files {
-        println!("LMAO I'M INSIDE NEXT: {}", file.name);
+    if index <= 0 || index >= local_files.len() {
+        let data: serde_json::Value = json!({
+            "index": 0,
+            "name": &local_files[0].name,
+            "media": &local_files[0].content,
+        });
+        return data;
+    } else {
+        let data: serde_json::Value = json!({
+            "index": index,
+            "name": &local_files[0].name,
+            "media": &local_files[index].content,
+        });
+        return data;
     }
-    return String::from("test");
 }
 
 /* MAIN */

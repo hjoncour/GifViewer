@@ -1,13 +1,20 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { open } from '@tauri-apps/api/dialog';
-import { listen } from '@tauri-apps/api/event'
 import { appWindow, WebviewWindow } from '@tauri-apps/api/window'
 
 import './styles/App.css';
 
+let index = 0;
+
 function App() {
 
+  interface NextResponse {
+    index: number;
+    media: string;
+    name: string;
+  }
+  
   const [imgSrc, setImgSrc] = useState("");                 // Store the image source URL
   const [errorMessage, setErrorMessage] = useState("");     // Store error messages
 
@@ -37,7 +44,6 @@ function App() {
       const blob = new Blob([uint8Array], { type: 'image/gif' });
       const url = URL.createObjectURL(blob);
 
-      // Set the image source
       setImgSrc(url);
     } catch (error) {
       console.error(error);
@@ -84,8 +90,23 @@ function App() {
 
     const nextItemListener = async () => {
       console.log('next-item event emitted');
-      const next: string = await invoke('next', {path: 'str', index: 0});
-      return "...";
+      // index++;
+      // console.log(`index sent: ${index}`);
+      const next: NextResponse = await invoke('next', {path: 'str', index: 0});
+      // index = next.index;
+      // console.log(`index returned: ${next.index}`);
+      const media: string = next.media;
+      try {
+        if (media) {
+          console.log('name: '+next.name);
+          displayGif(media);
+        } else {
+          setErrorMessage("Received invalid GIF data.");
+        }
+      } catch (error) {
+        console.error(error);
+        setErrorMessage("Failed to update the GIF.");
+      }
     };
 
     const firstItemListener = () => {
@@ -96,13 +117,13 @@ function App() {
       console.log('last-item event emitted');
     };
 
-    appWindow.listen('new-content', newContentListener);
-    appWindow.listen('open-file', openFileListener);
-    appWindow.listen('save-file', saveItemListener);
+    appWindow.listen('new-content',   newContentListener);
+    appWindow.listen('open-file',     openFileListener);
+    appWindow.listen('save-file',     saveItemListener);
     appWindow.listen('previous-item', previousItemListener);
-    appWindow.listen('next-item', nextItemListener);
-    appWindow.listen('first-item', firstItemListener);
-    appWindow.listen('last-item', lastItemListener);
+    appWindow.listen('next-item',     nextItemListener);
+    appWindow.listen('first-item',    firstItemListener);
+    appWindow.listen('last-item',     lastItemListener);
   }, []);
 
   return (

@@ -1,6 +1,6 @@
 
-use std::{fs, collections::HashMap};
-
+use std::{fs::{self, File}, collections::HashMap, io::{Read, Write}};
+extern crate base64;
 use crate::Multimedia;
 
 pub fn list_files(dir: &std::path::Path, extensions: Vec<&str>) -> Vec<Multimedia> {
@@ -21,6 +21,7 @@ pub fn list_files(dir: &std::path::Path, extensions: Vec<&str>) -> Vec<Multimedi
 }
 
 fn get_multimedia_info(file: &std::path::PathBuf, types: &[&str]) -> Option<Multimedia> {
+    let path: &&std::path::PathBuf = &file;
     let input: Option<&str> = file.to_str();
     let input_str: &str = match input {
         Some(s) => s,
@@ -32,16 +33,17 @@ fn get_multimedia_info(file: &std::path::PathBuf, types: &[&str]) -> Option<Mult
             let substring: &str = &input_str[last_slash_index + 1..];
             if substring.contains(format) {
                 if let Ok(metadata) = fs::metadata(file) {
-                    //println!("{:#?}", metadata);
-                    let multimedia: Multimedia = Multimedia {
-                        name: substring.to_string(),
-                        description: String::from("placeholder"),
-                        author: String::from("placeholder"),
-                        format: format.to_string(),
-                        dimensions: (0, 0),
-                        size_bytes: metadata.len(),
-                        metadata: HashMap::new(),
-                        content: Vec::new(),
+                    let content = encode_file(file.clone().into_os_string().into_string().unwrap());                   
+                        let multimedia: Multimedia = Multimedia {
+                        name:           substring.to_string(),
+                        description:    String::from("placeholder"),
+                        author:         String::from("placeholder"),
+                        format:         format.to_string(),
+                        file_type:      String::from("type"),
+                        dimensions:     (0, 0),
+                        size_bytes:     metadata.len(),
+                        metadata:       HashMap::new(),
+                        content:        content,
                     };
                     return Some(multimedia);
                 }
@@ -51,4 +53,10 @@ fn get_multimedia_info(file: &std::path::PathBuf, types: &[&str]) -> Option<Mult
     None
 }
 
-
+pub fn encode_file(path: String) -> String {
+    let mut file: File = File::open(path).expect("Failed to open file");
+    let mut file_data: Vec<u8> = Vec::new();
+    file.read_to_end(&mut file_data).expect("Failed to read file");
+    let encoded_file: String = base64::encode(&file_data);
+    return encoded_file;
+}
