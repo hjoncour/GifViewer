@@ -1,6 +1,16 @@
 # Approach:
 
-Initial approach changed, new approach: try open file with rust pass it base 64 to js code
+Initial approach changed, new approach: try open file with rust pass it base 64 to js code ✅
+
+Now: implement what is in useWindowListeners
+- next      (current)
+- previous
+- first
+- last
+- save
+- new
+- open
+- 
 
 
 # Ideas for the future
