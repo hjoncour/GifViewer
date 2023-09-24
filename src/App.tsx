@@ -2,16 +2,10 @@ import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { open } from '@tauri-apps/api/dialog';
 import { appWindow, WebviewWindow } from '@tauri-apps/api/window'
-import { setGlobalState, useGlobalState } from './state/index';
 import './styles/App.css';
-
-let index = 0;
+import './styles/media.css';
 
 function App() {
-
-  const handleIndex = (e: any) => {
-    setGlobalState("mainIndex", e.target.value)
-  }
 
   interface NextResponse {
     index: number;
@@ -19,9 +13,12 @@ function App() {
     name: string;
   }
   
-  const [imgSrc, setImgSrc] = useState("");                 // Store the image source URL
-  const [errorMessage, setErrorMessage] = useState("");     // Store error messages
+  const [imgSrc, setImgSrc] = useState("");                         // Store the image source URL
+  const [errorMessage, setErrorMessage] = useState("");             // Store error messages
+  const [valueToIncrement, setValueToIncrement] = useState(0);      // Initialize the value to 0
 
+
+  /* MEDIA MANAGEMENT */
   const readFileContents = async () => {
     try {
       const selectedPath = await open({ multiple: false, title: 'Open Text File' });
@@ -36,7 +33,7 @@ function App() {
     }
   };
 
-  function displayGif(base64Data: string) {
+  function displayMedia(base64Data: string) {
     try {
       const binaryData = atob(base64Data);
       const arrayBuffer = new ArrayBuffer(binaryData.length);
@@ -44,10 +41,8 @@ function App() {
       for (let i = 0; i < binaryData.length; i++) {
         uint8Array[i] = binaryData.charCodeAt(i);
       }
-
       const blob = new Blob([uint8Array], { type: 'image/gif' });
       const url = URL.createObjectURL(blob);
-
       setImgSrc(url);
     } catch (error) {
       console.error(error);
@@ -55,15 +50,15 @@ function App() {
     }
   }
 
-  const getGif = async () => {
+  const getMedia = async () => {
     const path = await readFileContents();
     if (path) {
       try {
         const base64Data = await getBase64(path);
-        displayGif(base64Data);
+        displayMedia(base64Data);
       } catch (error) {
         console.error(error);
-        setErrorMessage("Failed to decode the GIF.");
+        setErrorMessage("Failed to decode the Media.");
       }
     } else {
       setErrorMessage("No file selected.");
@@ -75,6 +70,7 @@ function App() {
     return base64Data;
   }
 
+  /* LISTENERS */
   useEffect(() => {
     const newContentListener = () => {
       console.log('new-content event emitted');
@@ -94,28 +90,24 @@ function App() {
 
     const nextItemListener = async () => {
       console.log('next-item event emitted');
-      const [currentMainIndex, setMainIndex] = useGlobalState("mainIndex"); // Get the current index and its updater
-      console.log(`index before: ${currentMainIndex}`);
-      setMainIndex(currentMainIndex + 1); // Update the index using the updater function
-      console.log(`index sent: ${currentMainIndex}`);
+      console.log(`valueToIncremen before: ${valueToIncrement}'`);
       const next: NextResponse = await invoke('next', { path: 'str', index: 0 });
-      setMainIndex(next.index); // Update the index with the response
-      console.log(`index returned: ${next.index}`);
+      setValueToIncrement((prevValue) => prevValue + 1);
+      console.log(`valueToIncremen after: ${valueToIncrement}'`);
+
       const media: string = next.media;
       try {
         if (media) {
           console.log('name: ' + next.name);
-          displayGif(media);
+          displayMedia(media);
         } else {
-          setErrorMessage("Received invalid GIF data.");
+          setErrorMessage("Received invalid media data.");
         }
       } catch (error) {
         console.error(error);
-        setErrorMessage("Failed to update the GIF.");
+        setErrorMessage("Failed to update the media.");
       }
     };
-    
-    
 
     const firstItemListener = () => {
       console.log('first-item event emitted');
@@ -134,16 +126,16 @@ function App() {
     appWindow.listen('last-item',     lastItemListener);
   }, []);
 
+  /* RETURN */
   return (
     <div className="container">
       <div>
-        <p>NEW BUTTON</p>
-        <button type="button" onClick={() => getGif()}> READ FILE CONTENTS </button>
+        <button type="button" onClick={() => getMedia()}> READ FILE CONTENTS </button>
       </div>
       {imgSrc && (
         <div>
-          <p>Decoded GIF:</p>
-          <img src={imgSrc} alt="Decoded GIF" />
+          <p>Decoded Media:</p>
+          <img src={imgSrc} alt="Decoded Media" className="decoded-media" />
         </div>
       )}
       {errorMessage && (
