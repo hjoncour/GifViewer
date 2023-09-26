@@ -6,12 +6,14 @@ use crate::Multimedia;
 pub fn list_files(dir: &std::path::Path, extensions: Vec<&str>) -> Vec<Multimedia> {
     let mut files: Vec<Multimedia> = vec![];
     if let Ok(entries) = fs::read_dir(dir) {
+        let mut local_index: usize = 0;
         for entry in entries {
             if let Ok(entry) = entry {
                 let path: std::path::PathBuf = entry.path();
                 if path.is_file() {
-                    if let Some(multimedia) = get_multimedia_info(&path, &extensions) {
+                    if let Some(multimedia) = get_multimedia_info(&path, &extensions, local_index) {
                         files.push(multimedia);
+                        local_index += 1;
                     }
                 }
             }
@@ -20,7 +22,7 @@ pub fn list_files(dir: &std::path::Path, extensions: Vec<&str>) -> Vec<Multimedi
     return files;
 }
 
-fn get_multimedia_info(file: &std::path::PathBuf, types: &[&str]) -> Option<Multimedia> {
+fn get_multimedia_info(file: &std::path::PathBuf, types: &[&str], local_index: usize) -> Option<Multimedia> {
     let path: &&std::path::PathBuf = &file;
     let input: Option<&str> = file.to_str();
     let input_str: &str = match input {
@@ -36,6 +38,7 @@ fn get_multimedia_info(file: &std::path::PathBuf, types: &[&str]) -> Option<Mult
                     let content = encode_file(file.clone().into_os_string().into_string().unwrap());                   
                         let multimedia: Multimedia = Multimedia {
                         name:           substring.to_string(),
+                        local_index:    local_index,
                         description:    String::from("placeholder"),
                         author:         String::from("placeholder"),
                         format:         format.to_string(),

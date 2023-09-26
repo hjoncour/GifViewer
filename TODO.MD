@@ -12,6 +12,15 @@ Now: implement what is in useWindowListeners
 - open
 - 
 
+# To Add
+
+- Message when trying to do something else when one action is currently being executed
+- Display a message when an action finished executing (ex: copied file ...)
+- 
+
+
+- Can we display name of file being viewed in the window?
+
 
 # Ideas for the future
 

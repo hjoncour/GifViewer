@@ -15,8 +15,7 @@ function App() {
   
   const [imgSrc, setImgSrc] = useState("");                         // Store the image source URL
   const [errorMessage, setErrorMessage] = useState("");             // Store error messages
-  const [valueToIncrement, setValueToIncrement] = useState(0);      // Initialize the value to 0
-
+  let   [mediaIndex, setMediaIndex] = useState(0);                  // Initialize the value to 0
 
   /* MEDIA MANAGEMENT */
   const readFileContents = async () => {
@@ -72,6 +71,7 @@ function App() {
 
   /* LISTENERS */
   useEffect(() => {
+    console.log('test console log twice?');
     const newContentListener = () => {
       console.log('new-content event emitted');
     };
@@ -89,16 +89,14 @@ function App() {
     };
 
     const nextItemListener = async () => {
-      console.log('next-item event emitted');
-      console.log(`valueToIncremen before: ${valueToIncrement}'`);
-      const next: NextResponse = await invoke('next', { path: 'str', index: 0 });
-      setValueToIncrement((prevValue) => prevValue + 1);
-      console.log(`valueToIncremen after: ${valueToIncrement}'`);
-
+      console.log('started nextitemListner');
+      console.log('mediaIndex before: '+mediaIndex);
+      let temp = mediaIndex+1;
+      const next: NextResponse = await invoke('next', { path: 'str', index: temp });
+      let newIndex: number = next.index;
       const media: string = next.media;
       try {
         if (media) {
-          console.log('name: ' + next.name);
           displayMedia(media);
         } else {
           setErrorMessage("Received invalid media data.");
@@ -107,6 +105,8 @@ function App() {
         console.error(error);
         setErrorMessage("Failed to update the media.");
       }
+      setMediaIndex(newIndex);
+      console.log('mediaIndex after: '+mediaIndex);
     };
 
     const firstItemListener = () => {
@@ -124,7 +124,7 @@ function App() {
     appWindow.listen('next-item',     nextItemListener);
     appWindow.listen('first-item',    firstItemListener);
     appWindow.listen('last-item',     lastItemListener);
-  }, []);
+  }, [mediaIndex]);
 
   /* RETURN */
   return (
@@ -144,6 +144,7 @@ function App() {
           <p>{errorMessage}</p>
         </div>
       )}
+      <div>counter: {mediaIndex}</div>
     </div>
   );
 }

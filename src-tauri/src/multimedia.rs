@@ -4,6 +4,7 @@ use std::fmt;
 #[derive(Debug)]
 pub struct Multimedia {
     pub name: String,                                           // The name of the file
+    pub local_index: usize,                                     // Local index
     pub description: String,                                    // A brief description or caption.
     pub author: String,                                         // The name of the author or creator.
     pub format: String,                                         // File format (e.g., JPEG, PNG, GIF, MP4).
@@ -16,8 +17,9 @@ pub struct Multimedia {
 
 impl fmt::Display for Multimedia {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "Multimedia Details:")?;    
+        writeln!(f, "Multimedia Details:")?;
         writeln!(f, "Name: {}", self.name)?;
+        writeln!(f, "Local index: {}", self.local_index)?;
         writeln!(f, "Description: {}", self.description)?;
         writeln!(f, "Author: {}", self.author)?;
         writeln!(f, "Format: {}", self.format)?;

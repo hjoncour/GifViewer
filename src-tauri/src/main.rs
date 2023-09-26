@@ -40,21 +40,33 @@ fn get_base64(path: String) -> String {
 
 #[tauri::command]
 fn next(path: String, index: usize) -> serde_json::Value {
-    println!("next called");
+    println!("\nnext called");
+    println!("received: {}", index);
+    
     let local_files: std::sync::MutexGuard<'_, Vec<Multimedia>> = LOCAL.lock().unwrap();
+
+    for file in &*local_files {
+        println!("{}: {}", file.local_index, file.name);
+    }
+
+    println!("index: {}\t list: {}\t index >= list:{}", index, local_files.len(), index >= local_files.len());
     if index <= 0 || index >= local_files.len() {
+        println!("case 1");
         let data: serde_json::Value = json!({
             "index": 0,
             "name": &local_files[0].name,
             "media": &local_files[0].content,
         });
+        println!("sent index: {}, {}", index, local_files[index].name);
         return data;
     } else {
+        println!("case 2");
         let data: serde_json::Value = json!({
             "index": index,
             "name": &local_files[0].name,
             "media": &local_files[index].content,
         });
+        println!("sent index: {}, {}", index, local_files[index].name);
         return data;
     }
 }
@@ -62,24 +74,18 @@ fn next(path: String, index: usize) -> serde_json::Value {
 /* MAIN */
 
 fn main() {
-
     /* GET LOCAL FILES */
-     let current_dir: std::path::PathBuf = std::env::current_dir().expect("Failed to get current directory");
-     let local: Arc<Mutex<Vec<Multimedia>>> = Arc::new(Mutex::new(Vec::new()));
-     let result_clone: Arc<Mutex<Vec<Multimedia>>> = Arc::clone(&local);
+    let current_dir: std::path::PathBuf = std::env::current_dir().expect("Failed to get current directory");
+    let local: Arc<Mutex<Vec<Multimedia>>> = Arc::new(Mutex::new(Vec::new()));
+    let result_clone: Arc<Mutex<Vec<Multimedia>>> = Arc::clone(&local);
      
-     let handle: thread::JoinHandle<()> = thread::spawn(move || {
+    let handle: thread::JoinHandle<()> = thread::spawn(move || {
         let files: Vec<Multimedia> = files::list_files(&current_dir, all_file_formats());
         let mut result: std::sync::MutexGuard<'_, Vec<Multimedia>> = LOCAL.lock().unwrap();
         result.extend(files);
     });
 
-     handle.join().unwrap();
-     
-     let local_files: std::sync::MutexGuard<'_, Vec<Multimedia>> = local.lock().unwrap();
-     for file in &*local_files {
-        println!("Watch this struct title: {}", file.name);
-     }
+    handle.join().unwrap();     
 
     /* BUILD APP  */
     tauri::Builder::default()
@@ -90,7 +96,10 @@ fn main() {
             "open"      =>      event.window().emit("open-file", "open").unwrap(),
             "save"      =>      event.window().emit("save-file", "save").unwrap(),
             "previous"  =>      event.window().emit("previous-item", "previous").unwrap(),
-            "next"      =>      event.window().emit("next-item", "next").unwrap(),
+            "next"      =>      {
+                event.window().emit("next-item", "next").unwrap();
+                println!("event received");
+            }
             "first"     =>      event.window().emit("first-item", "first").unwrap(),
             "last"      =>      event.window().emit("last-item", "last").unwrap(),
             _           =>      println!("Other")
