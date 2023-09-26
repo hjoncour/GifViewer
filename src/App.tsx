@@ -80,12 +80,12 @@ function App() {
       console.log('open-file event emitted');
     };
 
-    const saveItemListener = () => {
+    const saveItemListener = async () => {
       console.log('save-file event emitted');
+      const response: NextResponse = await invoke('save', {index: mediaIndex});
     };
 
     const previousItemListener = () => {
-      console.log('previous-item event emitted');
     };
 
     const nextItemListener = async () => {

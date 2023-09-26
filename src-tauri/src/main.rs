@@ -43,7 +43,7 @@ fn next(path: String, index: usize) -> serde_json::Value {
     println!("\nnext called");
     println!("received: {}", index);
     
-    let local_files: std::sync::MutexGuard<'_, Vec<Multimedia>> = LOCAL.lock().unwrap();
+    let local_files: std::sync::MutexGuard<'_, Vec<Multimedia>> = get_local_files();
 
     for file in &*local_files {
         println!("{}: {}", file.local_index, file.name);
@@ -71,6 +71,70 @@ fn next(path: String, index: usize) -> serde_json::Value {
     }
 }
 
+#[tauri::command]
+fn save(index: usize) -> serde_json::Value {
+    println!("\nsave called");
+    
+    let local_files: std::sync::MutexGuard<'_, Vec<Multimedia>> = get_local_files();
+
+    
+    println!("test");
+
+    for file in &*local_files {
+        println!("{}: {}", file.local_index, file.name);
+    }
+
+    if index < 0 || index >= local_files.len() {
+        return serde_json::json!({ "error": "Invalid index" });
+    }
+    
+    let target = &local_files[index];
+
+    println!("target: {}", target);
+    
+    // Create a file with the name from target.name in the current directory.
+    let mut file_name = target.name.clone();
+    let content_base64 = &target.content;
+    
+    // Decode the base64 content into bytes.
+    let content_bytes = base64::decode(content_base64).unwrap();
+    
+    // Ensure a unique file name by appending _copy if the file already exists.
+    let mut copy_number = 0;
+    while std::path::Path::new(&file_name).exists() {
+        copy_number += 1;
+        file_name = format!("{}_copy{}", target.name, copy_number);
+    }
+    
+    // Create a new file and write the content to it.
+    match std::fs::write(&file_name, &content_bytes) {
+        Ok(_) => {
+            println!("File '{}' successfully saved.", &file_name);
+            serde_json::json!({ "message": format!("File '{}' saved.", &file_name) })
+        }
+        Err(err) => {
+            eprintln!("Error saving file '{}': {:?}", &file_name, err);
+            serde_json::json!({ "error": format!("Error saving file '{}'", &file_name) })
+        }
+    }
+}
+
+
+fn get_local_files() -> std::sync::MutexGuard<'static, Vec<Multimedia>> {
+    let current_dir: std::path::PathBuf = std::env::current_dir().expect("Failed to get current directory");
+    let local: Arc<Mutex<Vec<Multimedia>>> = Arc::new(Mutex::new(Vec::new()));
+
+    // Check if local_files is empty and fetch files if necessary
+    if local.lock().unwrap().is_empty() {
+        let files: Vec<Multimedia> = files::list_files(&current_dir, all_file_formats());
+        let mut result: std::sync::MutexGuard<'_, Vec<Multimedia>> = LOCAL.lock().unwrap();
+        result.extend(files);
+    }
+
+    LOCAL.lock().unwrap()
+}
+
+
 /* MAIN */
 
 fn main() {
@@ -96,16 +160,12 @@ fn main() {
             "open"      =>      event.window().emit("open-file", "open").unwrap(),
             "save"      =>      event.window().emit("save-file", "save").unwrap(),
             "previous"  =>      event.window().emit("previous-item", "previous").unwrap(),
-            "next"      =>      {
-                event.window().emit("next-item", "next").unwrap();
-                println!("event received");
-            }
+            "next"      =>      event.window().emit("next-item", "next").unwrap(),
             "first"     =>      event.window().emit("first-item", "first").unwrap(),
             "last"      =>      event.window().emit("last-item", "last").unwrap(),
             _           =>      println!("Other")
-
         })
-        .invoke_handler(tauri::generate_handler![get_base64, next])
+        .invoke_handler(tauri::generate_handler![get_base64, next, save])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
