@@ -71,6 +71,36 @@ fn next(path: String, index: usize) -> serde_json::Value {
     }
 }
 
+#[tauri::command]
+fn save(index: usize) -> serde_json::Value {
+    println!("\nsave called");
+    
+    let local_files: std::sync::MutexGuard<'_, Vec<Multimedia>> = LOCAL.lock().unwrap(); // TO FIX
+    
+    if index < 0 || index >= local_files.len() {
+        return serde_json::json!({ "error": "Invalid index" });
+    }
+    
+    let target: &Multimedia = &local_files[index];
+    let content_base64: &String = &target.content;
+    let content_bytes: Vec<u8> = base64::decode(content_base64).unwrap();
+
+    let file_name: String = files::get_new_file_name(&target.name, &target.format);
+    
+    // Create a new file and write the content to it.
+    match std::fs::write(&file_name, &content_bytes) {
+        Ok(_) => {
+            println!("File '{}' successfully saved.", &file_name);
+            serde_json::json!({ "message": format!("File '{}' saved.", &file_name) })
+        }
+        Err(err) => {
+            eprintln!("Error saving file '{}': {:?}", &file_name, err);
+            serde_json::json!({ "error": format!("Error saving file '{}'", &file_name) })
+        }
+    }
+}
+
+
 /* MAIN */
 
 fn main() {
@@ -96,16 +126,12 @@ fn main() {
             "open"      =>      event.window().emit("open-file", "open").unwrap(),
             "save"      =>      event.window().emit("save-file", "save").unwrap(),
             "previous"  =>      event.window().emit("previous-item", "previous").unwrap(),
-            "next"      =>      {
-                event.window().emit("next-item", "next").unwrap();
-                println!("event received");
-            }
+            "next"      =>      event.window().emit("next-item", "next").unwrap(),
             "first"     =>      event.window().emit("first-item", "first").unwrap(),
             "last"      =>      event.window().emit("last-item", "last").unwrap(),
             _           =>      println!("Other")
-
         })
-        .invoke_handler(tauri::generate_handler![get_base64, next])
+        .invoke_handler(tauri::generate_handler![get_base64, next, save])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

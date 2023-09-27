@@ -63,3 +63,23 @@ pub fn encode_file(path: String) -> String {
     let encoded_file: String = base64::encode(&file_data);
     return encoded_file;
 }
+
+pub fn get_new_file_name(file_name: &String, format: &String) -> String {
+    let mut parts = file_name.rsplitn(2, ".");
+    let extension:  &str = parts.next().unwrap_or("");
+    let base:       &str = parts.next().unwrap_or("");
+    let mut copy_number: i32 = 0;
+    let mut file_name_of_copy: String = base.to_owned();
+
+    while std::path::Path::new(&get_full_name(&file_name_of_copy, extension)).exists() {
+        copy_number += 1;
+        file_name_of_copy = format!("{}_copy{}", file_name_of_copy, copy_number);
+    }
+    file_name_of_copy+= &(".".to_owned() + &extension);
+    return file_name_of_copy;
+}
+
+fn get_full_name(file_name: &String, extension: &str) -> String {
+    let full_name = file_name.to_owned() + &extension;
+    return full_name;
+}
