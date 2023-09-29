@@ -10,7 +10,13 @@ Now: implement what is in useWindowListeners
 - save
 - new
 - open
-- 
+
+
+### CURRENT ISSUES:
+
+- need to find a way to dynamically update list of media in backend
+- need to handle file already named like the file being saved
+- need to fix double call
 
 # To Add
 
@@ -24,7 +30,9 @@ Now: implement what is in useWindowListeners
 
 # Ideas for the future
 
-
+- Current path
+- All paths (list)
+- All medias
 
 Commands:
 - Randomize

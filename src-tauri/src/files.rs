@@ -1,5 +1,5 @@
 
-use std::{fs::{self, File}, collections::HashMap, io::{Read, Write}};
+use std::{fs::{self, File}, collections::HashMap, io::Read};
 extern crate base64;
 use crate::Multimedia;
 
