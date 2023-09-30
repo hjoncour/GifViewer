@@ -19,10 +19,10 @@ use multimedia::Multimedia;
 /* IMPORTS */
 
 extern crate base64;
+use std::path::PathBuf;
 use std::sync::LazyLock;
 use serde_json::json;
 
-use std::fs::File;
 use std::sync::{Arc, Mutex};
 use std::{thread, env};
 use std::io::{Read};
@@ -30,6 +30,7 @@ use std::io::{Read};
 /* STATIC */
 
 static LOCAL: LazyLock<Arc<Mutex<Vec<Multimedia>>>> = LazyLock::new(|| Arc::new(Mutex::new(Vec::new())));
+static ALL_PATHS: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
 
 /* COMMANDS */
 
@@ -50,7 +51,7 @@ fn next(path: String, index: usize) -> serde_json::Value {
     }
 
     println!("index: {}\t list: {}\t index >= list:{}", index, local_files.len(), index >= local_files.len());
-    if index <= 0 || index >= local_files.len() {
+    if index == 0 || index >= local_files.len() {
         println!("case 1");
         let data: serde_json::Value = json!({
             "index": 0,
@@ -74,19 +75,19 @@ fn next(path: String, index: usize) -> serde_json::Value {
 #[tauri::command]
 fn save(index: usize) -> serde_json::Value {
     println!("\nsave called");
-    
+
     let local_files: std::sync::MutexGuard<'_, Vec<Multimedia>> = LOCAL.lock().unwrap(); // TO FIX
-    
-    if index < 0 || index >= local_files.len() {
+
+    if index >= local_files.len() {
         return serde_json::json!({ "error": "Invalid index" });
     }
-    
+
     let target: &Multimedia = &local_files[index];
     let content_base64: &String = &target.content;
     let content_bytes: Vec<u8> = base64::decode(content_base64).unwrap();
 
     let file_name: String = files::get_new_file_name(&target.name, &target.format);
-    
+
     // Create a new file and write the content to it.
     match std::fs::write(&file_name, &content_bytes) {
         Ok(_) => {
@@ -100,9 +101,26 @@ fn save(index: usize) -> serde_json::Value {
     }
 }
 
+#[tauri::command]
+fn sync(path: String) -> serde_json::Value {
+    let current_dir: std::path::PathBuf = std::env::current_dir().expect("Failed to get current directory");
+    let mut all_paths = ALL_PATHS.lock().unwrap();
+    if !all_paths.contains(&current_dir) {
+        all_paths.push(current_dir);
+    }
+    let status: &str;
+    let message: &str;
+    if true {
+        status = "success";
+        message = "Operation succeeded";
+    } else {
+        status = "failure";
+        message = "Operation failed";
+    }
+    return serde_json::json!({"status": status, "message": message});
+}
 
 /* MAIN */
-
 fn main() {
     /* GET LOCAL FILES */
     let current_dir: std::path::PathBuf = std::env::current_dir().expect("Failed to get current directory");
@@ -115,7 +133,7 @@ fn main() {
         result.extend(files);
     });
 
-    handle.join().unwrap();     
+    handle.join().unwrap();
 
     /* BUILD APP  */
     tauri::Builder::default()
@@ -131,7 +149,7 @@ fn main() {
             "last"      =>      event.window().emit("last-item", "last").unwrap(),
             _           =>      println!("Other")
         })
-        .invoke_handler(tauri::generate_handler![get_base64, next, save])
+        .invoke_handler(tauri::generate_handler![get_base64, next, save, sync])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

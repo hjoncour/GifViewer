@@ -53,6 +53,10 @@ function App() {
     const path = await readFileContents();
     if (path) {
       try {
+        console.log('try sync');
+        const response = await invoke('sync', {path: path});
+        console.log('response: ');
+        console.log(response);
         const base64Data = await getBase64(path);
         displayMedia(base64Data);
       } catch (error) {
