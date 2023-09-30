@@ -8,9 +8,9 @@
 
 /* LOCAL */
 
-mod formats;
-mod menu;
-mod multimedia;
+mod formats;                                    // Types of files: jpeg, png, gif
+mod menu;                                       // Top left options, navigation, save, open
+mod multimedia;                                 // File informations: name, content, date, dimensions
 mod files;
 
 use formats::all_file_formats;
@@ -30,7 +30,9 @@ use std::io::{Read};
 /* STATIC */
 
 static LOCAL: LazyLock<Arc<Mutex<Vec<Multimedia>>>> = LazyLock::new(|| Arc::new(Mutex::new(Vec::new())));
+static CURRENT_PATH: LazyLock<Mutex<PathBuf>> = LazyLock::new(|| Mutex::new(PathBuf::new()));
 static ALL_PATHS: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
+
 
 /* COMMANDS */
 
@@ -43,33 +45,28 @@ fn get_base64(path: String) -> String {
 fn next(path: String, index: usize) -> serde_json::Value {
     println!("\nnext called");
     println!("received: {}", index);
-    
+    let index_val: usize;
+    let name: &String;
+    let media: &String;
+
     let local_files: std::sync::MutexGuard<'_, Vec<Multimedia>> = LOCAL.lock().unwrap();
 
     for file in &*local_files {
         println!("{}: {}", file.local_index, file.name);
     }
-
-    println!("index: {}\t list: {}\t index >= list:{}", index, local_files.len(), index >= local_files.len());
     if index == 0 || index >= local_files.len() {
-        println!("case 1");
-        let data: serde_json::Value = json!({
-            "index": 0,
-            "name": &local_files[0].name,
-            "media": &local_files[0].content,
-        });
-        println!("sent index: {}, {}", index, local_files[index].name);
-        return data;
+        //println!("case 1");
+        index_val   = 0;
+        name        = &local_files[0].name;
+        media       = &local_files[0].content;
     } else {
-        println!("case 2");
-        let data: serde_json::Value = json!({
-            "index": index,
-            "name": &local_files[0].name,
-            "media": &local_files[index].content,
-        });
-        println!("sent index: {}, {}", index, local_files[index].name);
-        return data;
+        //println!("case 2");
+        index_val   = index;
+        name        = &local_files[index_val].name;
+        media       = &local_files[index_val].content;
     }
+    //println!("sent index: {}, {}", &index_val, &name);
+    return json!({"index": index_val, "name": name, "media": media});
 }
 
 #[tauri::command]
@@ -102,22 +99,44 @@ fn save(index: usize) -> serde_json::Value {
 }
 
 #[tauri::command]
-fn sync(path: String) -> serde_json::Value {
-    let current_dir: std::path::PathBuf = std::env::current_dir().expect("Failed to get current directory");
+fn sync(path: String) {
+    let status: &str;
+    let message: &str;
+    println!("In sync");
+    println!("Current path: {:?}", get_current_path());
+    let current_dir: std::path::PathBuf = name_path_to_path(path);
     let mut all_paths = ALL_PATHS.lock().unwrap();
+    if current_dir != get_current_path() {
+        update_current_path(current_dir.clone());
+    }
     if !all_paths.contains(&current_dir) {
         all_paths.push(current_dir);
     }
-    let status: &str;
-    let message: &str;
-    if true {
-        status = "success";
-        message = "Operation succeeded";
-    } else {
-        status = "failure";
-        message = "Operation failed";
+    println!("Current path2: {:?}", get_current_path());
+    for path in  &*all_paths {
+        println!("{:?}", path);
     }
-    return serde_json::json!({"status": status, "message": message});
+    return;
+}
+
+
+
+/* PATH */
+
+
+fn name_path_to_path(name_path: String) -> PathBuf {
+    let path = PathBuf::from(name_path);
+    path.parent().unwrap_or(&path).to_path_buf()
+}
+
+fn get_current_path() -> PathBuf {
+    let current_path = CURRENT_PATH.lock().unwrap();
+    current_path.clone()
+}
+
+fn update_current_path(new_path: PathBuf) {
+    let mut current_path = CURRENT_PATH.lock().unwrap();
+    *current_path = new_path;
 }
 
 /* MAIN */
