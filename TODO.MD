@@ -49,7 +49,8 @@ Command + F --> Search
 Command + R --> Reverse
 Command + P --> Print
 Command + L --> Panel to visualize/scroll
-
+Command + G --> Global
+Command + something --> Local
 
 Other:
 - Replace Vector of types by an enum
