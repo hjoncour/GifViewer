@@ -79,6 +79,7 @@ function App() {
 
     const openFileListener = async () => {
       console.log('open-file event emitted');
+      getMedia();
     };
 
     const saveItemListener = async () => {
