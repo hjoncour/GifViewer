@@ -51,6 +51,7 @@ Command + P --> Print
 Command + L --> Panel to visualize/scroll
 Command + G --> Global
 Command + something --> Local
+Command + I --> Display informations
 
 Other:
 - Replace Vector of types by an enum

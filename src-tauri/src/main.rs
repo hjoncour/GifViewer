@@ -124,21 +124,7 @@ fn sync(path: String) {
                 local_references.push(&*Box::leak(Box::new(global_file.clone())));
             }
         });
-    }    println!("Current path2: {:?}", get_current_path());
-    for (path, medias) in &*all_paths {
-        println!("{:?} -> {:?} medias", path, medias.len());
     }
-    println!("\n\n----------------------\n\n");
-    println!("all medias:\n");
-    let medias: std::sync::MutexGuard<'_, Vec<Multimedia>> = GLOBAL.lock().unwrap();
-    for media in &*medias {
-        println!("{:?}", media.path);
-    }
-    let local_files = LOCAL.lock().unwrap();
-    for local in &*local_files {
-        println!("{:?}", local.path);
-    }
-
     return;
 }
 
@@ -162,9 +148,6 @@ fn update_current_path(new_path: PathBuf) {
 
 /* MAIN */
 fn main() {
-    /* GET LOCAL FILES */
-
-
     /* BUILD APP  */
     tauri::Builder::default()
         .menu(menu::create_app_menu())
