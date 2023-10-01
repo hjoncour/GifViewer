@@ -55,7 +55,7 @@ fn next(path: String, index: usize) -> serde_json::Value {
         println!("{}: {}", file.local_index, file.name);
     }
     if index == 0 || index >= local_files.len() {
-        //println!("case 1");çà)
+        //println!("case 1");)
         index_val   = 0;
         name        = &local_files[0].name;
         media       = &local_files[0].content;
