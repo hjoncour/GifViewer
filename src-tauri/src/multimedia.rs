@@ -1,10 +1,12 @@
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Multimedia {
     pub name: String,                                           // The name of the file
     pub local_index: usize,                                     // Local index
+    pub path: PathBuf,                                          // Path
     pub description: String,                                    // A brief description or caption.
     pub author: String,                                         // The name of the author or creator.
     pub format: String,                                         // File format (e.g., JPEG, PNG, GIF, MP4).

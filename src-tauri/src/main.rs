@@ -23,16 +23,16 @@ use std::path::PathBuf;
 use std::sync::LazyLock;
 use serde_json::json;
 
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::{thread, env};
 use std::io::{Read};
 
 /* STATIC */
-
-static LOCAL: LazyLock<Arc<Mutex<Vec<Multimedia>>>> = LazyLock::new(|| Arc::new(Mutex::new(Vec::new())));
+static GLOBAL: LazyLock<Arc<Mutex<Vec<Multimedia>>>> = LazyLock::new(|| Arc::new(Mutex::new(Vec::new())));
+static LOCAL: LazyLock<Arc<Mutex<Vec<&'static Multimedia>>>> = LazyLock::new(|| Arc::new(Mutex::new(Vec::new())));
 static CURRENT_PATH: LazyLock<Mutex<PathBuf>> = LazyLock::new(|| Mutex::new(PathBuf::new()));
-static ALL_PATHS: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
-
+static ALL_PATHS: LazyLock<Mutex<HashMap<PathBuf, Vec<&'static Multimedia>>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
 /* COMMANDS */
 
@@ -49,13 +49,13 @@ fn next(path: String, index: usize) -> serde_json::Value {
     let name: &String;
     let media: &String;
 
-    let local_files: std::sync::MutexGuard<'_, Vec<Multimedia>> = LOCAL.lock().unwrap();
+    let local_files: std::sync::MutexGuard<'_,  Vec<&Multimedia>> = LOCAL.lock().unwrap();
 
     for file in &*local_files {
         println!("{}: {}", file.local_index, file.name);
     }
     if index == 0 || index >= local_files.len() {
-        //println!("case 1");
+        //println!("case 1");)
         index_val   = 0;
         name        = &local_files[0].name;
         media       = &local_files[0].content;
@@ -73,7 +73,7 @@ fn next(path: String, index: usize) -> serde_json::Value {
 fn save(index: usize) -> serde_json::Value {
     println!("\nsave called");
 
-    let local_files: std::sync::MutexGuard<'_, Vec<Multimedia>> = LOCAL.lock().unwrap(); // TO FIX
+    let local_files: std::sync::MutexGuard<'_, Vec<&Multimedia>> = LOCAL.lock().unwrap(); // TO FIX
 
     if index >= local_files.len() {
         return serde_json::json!({ "error": "Invalid index" });
@@ -104,17 +104,26 @@ fn sync(path: String) {
     let message: &str;
     println!("In sync");
     println!("Current path: {:?}", get_current_path());
-    let current_dir: std::path::PathBuf = name_path_to_path(path);
+    let current_dir: PathBuf = name_path_to_path(path);
     let mut all_paths = ALL_PATHS.lock().unwrap();
     if current_dir != get_current_path() {
-        update_current_path(current_dir.clone());
-    }
-    if !all_paths.contains(&current_dir) {
-        all_paths.push(current_dir);
-    }
-    println!("Current path2: {:?}", get_current_path());
-    for path in  &*all_paths {
-        println!("{:?}", path);
+        update_current_path(current_dir.clone());                                        
+    }                                                                                           
+    let all_paths_entry = all_paths.entry(current_dir.clone());
+
+    if all_paths_entry.or_insert_with(Vec::new).is_empty() {
+        let current_dir_clone = current_dir.clone();
+        thread::spawn(move || {
+            let files: Vec<Multimedia> = files::list_files(&current_dir_clone, all_file_formats());
+
+            let mut global_files: std::sync::MutexGuard<'_, Vec<Multimedia>> = GLOBAL.lock().unwrap();
+            global_files.extend(files.clone());
+
+            let mut local_references: std::sync::MutexGuard<'_, Vec<&'static Multimedia>> = LOCAL.lock().unwrap();
+            for global_file in &*global_files {
+                local_references.push(&*Box::leak(Box::new(global_file.clone())));
+            }
+        });
     }
     return;
 }
@@ -122,15 +131,13 @@ fn sync(path: String) {
 
 
 /* PATH */
-
-
 fn name_path_to_path(name_path: String) -> PathBuf {
     let path = PathBuf::from(name_path);
     path.parent().unwrap_or(&path).to_path_buf()
 }
 
 fn get_current_path() -> PathBuf {
-    let current_path = CURRENT_PATH.lock().unwrap();
+    let current_path: std::sync::MutexGuard<'_, PathBuf> = CURRENT_PATH.lock().unwrap();
     current_path.clone()
 }
 
@@ -141,19 +148,6 @@ fn update_current_path(new_path: PathBuf) {
 
 /* MAIN */
 fn main() {
-    /* GET LOCAL FILES */
-    let current_dir: std::path::PathBuf = std::env::current_dir().expect("Failed to get current directory");
-    let local: Arc<Mutex<Vec<Multimedia>>> = Arc::new(Mutex::new(Vec::new()));
-    let result_clone: Arc<Mutex<Vec<Multimedia>>> = Arc::clone(&local);
-     
-    let handle: thread::JoinHandle<()> = thread::spawn(move || {
-        let files: Vec<Multimedia> = files::list_files(&current_dir, all_file_formats());
-        let mut result: std::sync::MutexGuard<'_, Vec<Multimedia>> = LOCAL.lock().unwrap();
-        result.extend(files);
-    });
-
-    handle.join().unwrap();
-
     /* BUILD APP  */
     tauri::Builder::default()
         .menu(menu::create_app_menu())

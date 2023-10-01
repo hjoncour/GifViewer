@@ -11,7 +11,6 @@ Now: implement what is in useWindowListeners
 - new
 - open
 
-
 ### CURRENT ISSUES:
 
 - need to find a way to dynamically update list of media in backend
@@ -49,7 +48,9 @@ Command + F --> Search
 Command + R --> Reverse
 Command + P --> Print
 Command + L --> Panel to visualize/scroll
-
+Command + G --> Global
+Command + something --> Local
+Command + I --> Display informations
 
 Other:
 - Replace Vector of types by an enum

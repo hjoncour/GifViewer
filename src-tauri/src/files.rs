@@ -39,6 +39,7 @@ fn get_multimedia_info(file: &std::path::PathBuf, types: &[&str], local_index: u
                         let multimedia: Multimedia = Multimedia {
                         name:           substring.to_string(),
                         local_index:    local_index,
+                        path: path.to_path_buf(),
                         description:    String::from("placeholder"),
                         author:         String::from("placeholder"),
                         format:         format.to_string(),
