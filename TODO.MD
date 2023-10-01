@@ -11,7 +11,6 @@ Now: implement what is in useWindowListeners
 - new
 - open
 
-
 ### CURRENT ISSUES:
 
 - need to find a way to dynamically update list of media in backend

@@ -28,7 +28,6 @@ $ npm run tauri dev
     - **Save:** Save the current file.
     - **Next/Previous:** Navigate through files.
     - **First/Last:** Jump to the beginning or the end of the list.
-3. [Other instructions specific to your application]
 
 ## Contributing
 
@@ -36,5 +35,4 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 ## License
 
-[Your License Here]
-## COMMANDS
+BSD License 2.0
