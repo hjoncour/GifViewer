@@ -51,29 +51,24 @@ fn next(path: String, index: usize) -> serde_json::Value {
 
     let local_files: std::sync::MutexGuard<'_,  Vec<&Multimedia>> = LOCAL.lock().unwrap();
 
-    for file in &*local_files {
-        println!("{}: {}", file.local_index, file.name);
+    if local_files.len() == 0 {
+        sync(path);
     }
     if index == 0 || index >= local_files.len() {
-        //println!("case 1");)
         index_val   = 0;
         name        = &local_files[0].name;
         media       = &local_files[0].content;
     } else {
-        //println!("case 2");
         index_val   = index;
         name        = &local_files[index_val].name;
         media       = &local_files[index_val].content;
     }
-    //println!("sent index: {}, {}", &index_val, &name);
     return json!({"index": index_val, "name": name, "media": media});
 }
 
 #[tauri::command]
 fn save(index: usize) -> serde_json::Value {
-    println!("\nsave called");
-
-    let local_files: std::sync::MutexGuard<'_, Vec<&Multimedia>> = LOCAL.lock().unwrap(); // TO FIX
+    let local_files: std::sync::MutexGuard<'_, Vec<&Multimedia>> = LOCAL.lock().unwrap();
 
     if index >= local_files.len() {
         return serde_json::json!({ "error": "Invalid index" });
@@ -82,7 +77,6 @@ fn save(index: usize) -> serde_json::Value {
     let target: &Multimedia = &local_files[index];
     let content_base64: &String = &target.content;
     let content_bytes: Vec<u8> = base64::decode(content_base64).unwrap();
-
     let file_name: String = files::get_new_file_name(&target.name, &target.format);
 
     // Create a new file and write the content to it.
@@ -109,7 +103,7 @@ fn sync(path: String) {
     if current_dir != get_current_path() {
         update_current_path(current_dir.clone());                                        
     }                                                                                           
-    let all_paths_entry = all_paths.entry(current_dir.clone());
+    let all_paths_entry: std::collections::hash_map::Entry<'_, PathBuf, Vec<&Multimedia>> = all_paths.entry(current_dir.clone());
 
     if all_paths_entry.or_insert_with(Vec::new).is_empty() {
         let current_dir_clone = current_dir.clone();
