@@ -3,17 +3,18 @@
 Initial approach changed, new approach: try open file with rust pass it base 64 to js code ✅
 
 Now: implement what is in useWindowListeners
-- next      (current)
-- previous
+- next              ✅ (still need to fix double call / strictmode?)
+- previous  
 - first
 - last
-- save
+- save              ✅
+- save (+path)
 - new
-- open
+- open              ✅
+- open multiple     
 
 ### CURRENT ISSUES:
 
-- need to find a way to dynamically update list of media in backend
 - need to handle file already named like the file being saved
 - need to fix double call
 
@@ -38,6 +39,9 @@ Commands:
 - Sort
 - 
 
+- Multiple windows
+  - Informations
+  - Multiple images at once
 
 Menu:
 - Pick file type to display: gif, png, jpeg etc
@@ -46,11 +50,11 @@ Menu:
 
 Command + F --> Search
 Command + R --> Reverse
-Command + P --> Print
+Command + P --> Print                           Need to find a way to allow pop up windows in tauri
 Command + L --> Panel to visualize/scroll
 Command + G --> Global
 Command + something --> Local
-Command + I --> Display informations
+Command + I --> Display informations            Need to find how to add sub windows
 
 Other:
 - Replace Vector of types by an enum
