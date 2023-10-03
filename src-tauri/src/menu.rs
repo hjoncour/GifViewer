@@ -8,6 +8,7 @@ pub fn create_app_menu() -> Menu {
     let file_menu: Submenu = Submenu::new("File", Menu::new()
                                 .add_item(CustomMenuItem::new("new".to_string(), "New").accelerator("CmdOrCtrl+N"))
                                 .add_item(CustomMenuItem::new("open".to_string(), "Open").accelerator("CmdOrCtrl+O"))
+                                .add_item(CustomMenuItem::new("print".to_string(), "Print").accelerator("CmdOrCtrl+P"))
                                 .add_item(CustomMenuItem::new("save".to_string(), "Save").accelerator("CmdOrCtrl+S")));
     
     let view_menu: Submenu = Submenu::new("View", Menu::new()

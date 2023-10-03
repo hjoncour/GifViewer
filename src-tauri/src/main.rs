@@ -67,6 +67,29 @@ fn next(path: String, index: usize) -> serde_json::Value {
 }
 
 #[tauri::command]
+fn previous(path: String, index: usize) -> serde_json::Value {
+    println!("\nprevious called");
+    println!("received: {}", index);
+    let index_val: usize;
+    let name: &String;
+    let media: &String;
+    let local_files: std::sync::MutexGuard<'_,  Vec<&Multimedia>> = LOCAL.lock().unwrap();
+    if local_files.len() == 0 {
+        sync(path);
+    }
+    if index >= local_files.len() {
+        index_val   = 0;
+        name        = &local_files[0].name;
+        media       = &local_files[0].content;
+    } else {
+        index_val   = index;
+        name        = &local_files[index_val].name;
+        media       = &local_files[index_val].content;
+    }
+    return json!({"index": index_val, "name": name, "media": media});
+}
+
+#[tauri::command]
 fn save(index: usize) -> serde_json::Value {
     let local_files: std::sync::MutexGuard<'_, Vec<&Multimedia>> = LOCAL.lock().unwrap();
 
@@ -79,7 +102,6 @@ fn save(index: usize) -> serde_json::Value {
     let content_bytes: Vec<u8> = base64::decode(content_base64).unwrap();
     let file_name: String = files::get_new_file_name(&target.name, &target.format);
 
-    // Create a new file and write the content to it.
     match std::fs::write(&file_name, &content_bytes) {
         Ok(_) => {
             println!("File '{}' successfully saved.", &file_name);
@@ -150,13 +172,14 @@ fn main() {
             "new"       =>      println!("Placeholder for new"),
             "open"      =>      event.window().emit("open-file", "open").unwrap(),
             "save"      =>      event.window().emit("save-file", "save").unwrap(),
+            "print"     =>      event.window().emit("print-file", "print").unwrap(),
             "previous"  =>      event.window().emit("previous-item", "previous").unwrap(),
             "next"      =>      event.window().emit("next-item", "next").unwrap(),
             "first"     =>      event.window().emit("first-item", "first").unwrap(),
             "last"      =>      event.window().emit("last-item", "last").unwrap(),
             _           =>      println!("Other")
         })
-        .invoke_handler(tauri::generate_handler![get_base64, next, save, sync])
+        .invoke_handler(tauri::generate_handler![get_base64, next, previous, save, sync])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

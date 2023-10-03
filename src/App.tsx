@@ -7,7 +7,7 @@ import './styles/media.css';
 
 function App() {
 
-  interface NextResponse {
+  interface backendResponse {
     index: number;
     media: string;
     name: string;
@@ -84,17 +84,51 @@ function App() {
 
     const saveItemListener = async () => {
       console.log('save-file event emitted');
-      const response: NextResponse = await invoke('save', {index: mediaIndex});
+      if (!imgSrc) {
+        setErrorMessage("No current media to proceed with the action.");
+        return;
+    }
+      const response: backendResponse = await invoke('save', {index: mediaIndex});
     };
 
-    const previousItemListener = () => {
+    const previousItemListener = async () => {
+      console.log('previous event emitted');
+      if (!imgSrc) {
+        setErrorMessage("No current media to proceed with the action.");
+        return;
+    }
+      let temp;
+      if (mediaIndex <= 0) {
+        temp = 0;
+      } else {
+        temp = mediaIndex-1;
+      }
+      const previous: backendResponse = await invoke('previous', { path: 'str', index: temp });
+      let newIndex: number = previous.index;
+      const media: string = previous.media;
+      try {
+        if (media) {
+          displayMedia(media);
+        } else {
+          setErrorMessage("Received invalid media data.");
+        }
+      } catch (error) {
+        console.error(error);
+        setErrorMessage("Failed to update the media.");
+      }
+      setMediaIndex(newIndex);
+      console.log('mediaIndex after: '+mediaIndex);
     };
 
     const nextItemListener = async () => {
       console.log('started nextitemListner');
       console.log('mediaIndex before: '+mediaIndex);
+      if (!imgSrc) {
+        setErrorMessage("No current media to proceed with the action.");
+        return;
+      }
       let temp = mediaIndex+1;
-      const next: NextResponse = await invoke('next', { path: 'str', index: temp });
+      const next: backendResponse = await invoke('next', { path: 'str', index: temp });
       let newIndex: number = next.index;
       const media: string = next.media;
       try {
@@ -111,13 +145,26 @@ function App() {
       console.log('mediaIndex after: '+mediaIndex);
     };
 
-    const firstItemListener = () => {
+    const firstItemListener = async () => {
       console.log('first-item event emitted');
+      if (!imgSrc) {
+        setErrorMessage("No current media to proceed with the action.");
+        return;
+      }
     };
 
-    const lastItemListener = () => {
+    const lastItemListener = async () => {
+      if (!imgSrc) {
+        setErrorMessage("No current media to proceed with the action.");
+        return;
+      }
       console.log('last-item event emitted');
     };
+
+    const printListener = async () => {
+      console.log('print event emitted');
+    };
+    
 
     appWindow.listen('new-content',   newContentListener);
     appWindow.listen('open-file',     openFileListener);
