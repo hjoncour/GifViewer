@@ -47,7 +47,8 @@ Menu:
 - Pick file type to display: gif, png, jpeg etc
 - 
 
-
+Something -->   Select for later
+Command + D --> Delete
 Command + F --> Search
 Command + R --> Reverse
 Command + P --> Print                           Need to find a way to allow pop up windows in tauri

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
+import { listen } from '@tauri-apps/api/event'
 import { open } from '@tauri-apps/api/dialog';
 import { appWindow, WebviewWindow } from '@tauri-apps/api/window'
 import './styles/App.css';
 import './styles/media.css';
+
 
 function App() {
 
@@ -161,11 +163,30 @@ function App() {
       console.log('last-item event emitted');
     };
 
+    const fileDropListener = async (file: fileDropEvent) => {
+      console.log(file);
+      const path: string[] = file.payload;
+      console.log('path: '+path);
+      if (path.length == 1) {
+          try {
+            console.log('in handlefiledrop');
+            await invoke('sync', {path: path[0]});
+            const base64Data = await getBase64(path[0]);
+            displayMedia(base64Data);
+          } catch (error) {
+            console.error(error);
+            setErrorMessage("Failed to decode the Media.");
+          }
+        } else {
+          setErrorMessage("Not yet implemented.");
+        }
+    };
+  
     const printListener = async () => {
       console.log('print event emitted');
     };
     
-
+    appWindow.listen('tauri://file-drop', fileDropListener);
     appWindow.listen('new-content',   newContentListener);
     appWindow.listen('open-file',     openFileListener);
     appWindow.listen('save-file',     saveItemListener);
