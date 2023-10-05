@@ -6,3 +6,40 @@
     width: auto;
     height: auto;
   }
+
+/* */ 
+
+.mainButton {
+  display: inline-block;
+  height:max-content;
+  border: 7px dashed #1C1C1C;
+  border-radius: 30px;
+  font-size: 32px;
+  color: #B1B1B1;
+  height: 100%;
+  width: 100;
+  /* background-color: blue; */
+  box-shadow: none;
+  background-color: #2f2f2f;
+  padding: 30px;
+  margin: 50px 100px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.mainButton:hover {
+  border-color: #B1B1B1;
+}
+
+.container {
+  /* background-color: red; */
+  width: 100vw;             /* full width of the viewport */
+  height: 100vh;            /* full height of the viewport */
+  padding-top: 5vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  margin: 0;                /* reset any default margins */
+  box-sizing: border-box;   /* ensure padding doesn't increase the size */
+}

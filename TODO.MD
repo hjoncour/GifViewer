@@ -24,6 +24,7 @@ Now: implement what is in useWindowListeners
 - Display a message when an action finished executing (ex: copied file ...)
 - 
 
+- Drag & drop multiple files
 
 - Can we display name of file being viewed in the window?
 
