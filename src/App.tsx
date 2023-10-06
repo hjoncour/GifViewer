@@ -3,7 +3,6 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { listen } from '@tauri-apps/api/event'
 import { open } from '@tauri-apps/api/dialog';
 import { appWindow, WebviewWindow } from '@tauri-apps/api/window'
-import './styles/App.css';
 import './styles/media.css';
 
 
@@ -166,7 +165,6 @@ function App() {
     const fileDropListener = async (file: fileDropEvent) => {
       console.log(file);
       const path: string[] = file.payload;
-      console.log('path: '+path);
       if (path.length == 1) {
           try {
             console.log('in handlefiledrop');
@@ -196,27 +194,27 @@ function App() {
     appWindow.listen('last-item',     lastItemListener);
   }, [mediaIndex]);
 
-  /* RETURN */
-  return (
-    <div className="container">
+/* RETURN */
+return (
+  <div className="container">
+    {(!imgSrc && !errorMessage) && (
+      <button type="button" className="mainButton" onClick={() => getMedia()}> READ FILE CONTENTS </button>
+    )}
+    {imgSrc && (
       <div>
-        <button type="button" onClick={() => getMedia()}> READ FILE CONTENTS </button>
+        <img src={imgSrc} alt="Decoded Media" className="decoded-media" />
       </div>
-      {imgSrc && (
-        <div>
-          <p>Decoded Media:</p>
-          <img src={imgSrc} alt="Decoded Media" className="decoded-media" />
-        </div>
-      )}
-      {errorMessage && (
-        <div>
-          <p>Error:</p>
-          <p>{errorMessage}</p>
-        </div>
-      )}
-      <div>counter: {mediaIndex}</div>
-    </div>
-  );
+    )}
+    {errorMessage && (
+      <div>
+        <p>Error:</p>
+        <p>{errorMessage}</p>
+      </div>
+    )}
+    <div>counter: {mediaIndex}</div> {/*It is a debug tool, it is meant to be removed later */}
+  </div>
+);
+
 }
 
 export default App;
