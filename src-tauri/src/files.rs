@@ -1,7 +1,25 @@
 
 use std::{fs::{self, File}, collections::HashMap, io::Read};
 extern crate base64;
-use crate::Multimedia;
+use crate::{Multimedia, formats};
+
+pub fn list_selection(paths: Vec<String>) -> Vec<Multimedia> {
+    let mut files: Vec<Multimedia> = vec![];
+    let mut local_index: usize = 0;
+    for entry in &paths {
+        let path_buf: std::path::PathBuf = std::path::Path::new(entry).to_path_buf();
+        if path_buf.is_file() {
+            if let Some(multimedia) = get_multimedia_info(&path_buf, &formats::all_file_formats(), local_index) {
+                files.push(multimedia);
+                local_index += 1;
+            }
+        }
+    }
+    files
+}
+
+//            if let Some(multimedia) = get_multimedia_info(&entry, &formats::all_file_formats(), local_index) {
+
 
 pub fn list_files(dir: &std::path::Path, extensions: Vec<&str>) -> Vec<Multimedia> {
     let mut files: Vec<Multimedia> = vec![];

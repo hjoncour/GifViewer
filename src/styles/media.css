@@ -7,8 +7,6 @@
     height: auto;
   }
 
-/* */ 
-
 .mainButton {
   display: inline-block;
   height:max-content;
@@ -18,7 +16,6 @@
   color: #B1B1B1;
   height: 100%;
   width: 100;
-  /* background-color: blue; */
   box-shadow: none;
   background-color: #2f2f2f;
   padding: 30px;

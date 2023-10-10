@@ -28,11 +28,14 @@ use std::sync::{Arc, Mutex};
 use std::{thread, env};
 use std::io::{Read};
 
+use crate::files::list_selection;
+
 /* STATIC */
 static GLOBAL: LazyLock<Arc<Mutex<Vec<Multimedia>>>> = LazyLock::new(|| Arc::new(Mutex::new(Vec::new())));
 static LOCAL: LazyLock<Arc<Mutex<Vec<&'static Multimedia>>>> = LazyLock::new(|| Arc::new(Mutex::new(Vec::new())));
 static CURRENT_PATH: LazyLock<Mutex<PathBuf>> = LazyLock::new(|| Mutex::new(PathBuf::new()));
 static ALL_PATHS: LazyLock<Mutex<HashMap<PathBuf, Vec<&'static Multimedia>>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+static ALL_SELECTIONS: Vec<Vec<Multimedia>> = Vec::new(); // For drag & drop multiple items
 
 /* COMMANDS */
 
@@ -115,6 +118,35 @@ fn save(index: usize) -> serde_json::Value {
 }
 
 #[tauri::command]
+fn new_selection(selection: Vec<String>) -> serde_json::Value {
+
+    let selected_medias: Vec<Multimedia> = list_selection(selection);
+    for media in selected_medias {
+        println!("media: {}", media.name);
+    }
+
+    /*
+    let target: &Multimedia = &local_files[index];
+    let content_base64: &String = &target.content;
+    let content_bytes: Vec<u8> = base64::decode(content_base64).unwrap();
+    let file_name: String = files::get_new_file_name(&target.name, &target.format);
+
+    match std::fs::write(&file_name, &content_bytes) {
+        Ok(_) => {
+            println!("File '{}' successfully saved.", &file_name);
+            serde_json::json!({ "message": format!("File '{}' saved.", &file_name) })
+        }
+        Err(err) => {
+            eprintln!("Error saving file '{}': {:?}", &file_name, err);
+            serde_json::json!({ "error": format!("Error saving file '{}'", &file_name) })
+        }
+    }
+    */
+    serde_json::json!({ "message": "message"})
+
+}
+
+#[tauri::command]
 fn sync(path: String) {
     let status: &str;
     let message: &str;
@@ -143,8 +175,6 @@ fn sync(path: String) {
     }
     return;
 }
-
-
 
 /* PATH */
 fn name_path_to_path(name_path: String) -> PathBuf {
@@ -179,7 +209,7 @@ fn main() {
             "last"      =>      event.window().emit("last-item", "last").unwrap(),
             _           =>      println!("Other")
         })
-        .invoke_handler(tauri::generate_handler![get_base64, next, previous, save, sync])
+        .invoke_handler(tauri::generate_handler![get_base64, next, previous, save, sync, new_selection])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
