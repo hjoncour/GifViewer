@@ -35,7 +35,7 @@ static GLOBAL: LazyLock<Arc<Mutex<Vec<Multimedia>>>> = LazyLock::new(|| Arc::new
 static LOCAL: LazyLock<Arc<Mutex<Vec<&'static Multimedia>>>> = LazyLock::new(|| Arc::new(Mutex::new(Vec::new())));
 static CURRENT_PATH: LazyLock<Mutex<PathBuf>> = LazyLock::new(|| Mutex::new(PathBuf::new()));
 static ALL_PATHS: LazyLock<Mutex<HashMap<PathBuf, Vec<&'static Multimedia>>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
-static ALL_SELECTIONS: Vec<Vec<Multimedia>> = Vec::new(); // For drag & drop multiple items
+static ALL_SELECTIONS: LazyLock<Mutex<Vec<Vec<Multimedia>>>> = LazyLock::new(|| Mutex::new(Vec::new()));
 
 /* COMMANDS */
 
@@ -119,32 +119,54 @@ fn save(index: usize) -> serde_json::Value {
 
 #[tauri::command]
 fn new_selection(selection: Vec<String>) -> serde_json::Value {
-
     let selected_medias: Vec<Multimedia> = list_selection(selection);
-    for media in selected_medias {
+    for media in &selected_medias {
         println!("media: {}", media.name);
     }
 
-    /*
-    let target: &Multimedia = &local_files[index];
-    let content_base64: &String = &target.content;
-    let content_bytes: Vec<u8> = base64::decode(content_base64).unwrap();
-    let file_name: String = files::get_new_file_name(&target.name, &target.format);
+    // Append selected_medias to ALL_SELECTIONS
+    {
+        let mut all_selections = ALL_SELECTIONS.lock().unwrap();
+        all_selections.push(selected_medias);
+    }
 
-    match std::fs::write(&file_name, &content_bytes) {
-        Ok(_) => {
-            println!("File '{}' successfully saved.", &file_name);
-            serde_json::json!({ "message": format!("File '{}' saved.", &file_name) })
-        }
-        Err(err) => {
-            eprintln!("Error saving file '{}': {:?}", &file_name, err);
-            serde_json::json!({ "error": format!("Error saving file '{}'", &file_name) })
+    // Add references to LOCAL
+    {
+        let mut local_references: std::sync::MutexGuard<'_, Vec<&'static Multimedia>> = LOCAL.lock().unwrap();
+        let all_selections = ALL_SELECTIONS.lock().unwrap();
+        for media in all_selections.last().unwrap() {
+            local_references.push(&*Box::leak(Box::new(media.clone())));
         }
     }
-    */
-    serde_json::json!({ "message": "message"})
 
+    // Print the contents of LOCAL
+    {
+        let local_references = LOCAL.lock().unwrap();
+        println!("Contents of LOCAL:");
+        for media in &*local_references {
+            println!("Name: {}, Content: {}", media.name, media.content);
+        }
+    }
+
+    // Return the first element of LOCAL
+    let first_media: serde_json::Value;
+    {
+        let local_references = LOCAL.lock().unwrap();
+        if let Some(first) = local_references.first() {
+            first_media = serde_json::json!({
+                "name": first.name,
+                "content": first.content
+            });
+        } else {
+            first_media = serde_json::json!({
+                "error": "LOCAL is empty"
+            });
+        }
+    }
+
+    first_media
 }
+
 
 #[tauri::command]
 fn sync(path: String) {

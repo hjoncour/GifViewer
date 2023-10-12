@@ -181,7 +181,9 @@ function App() {
             for (let item in file.payload) {
               console.log(`item: ${file.payload[item]}`);
             }
-            await invoke('new_selection', {selection: file.payload});
+            const response = await invoke('new_selection', {selection: file.payload});
+            console.log('response');
+            console.log(response);
           setErrorMessage("Not yet implemented.");
         }
     };
