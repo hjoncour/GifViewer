@@ -12,6 +12,7 @@ function App() {
     index: number;
     media: string;
     name: string;
+    content: string;
   }
   
   const [imgSrc, setImgSrc] = useState("");                         // Store the image source URL
@@ -176,15 +177,8 @@ function App() {
             setErrorMessage("Failed to decode the Media.");
           }
         } else {
-          console.log('items:');
-          console.log(file.payload);
-            for (let item in file.payload) {
-              console.log(`item: ${file.payload[item]}`);
-            }
-            const response = await invoke('new_selection', {selection: file.payload});
-            console.log('response');
-            console.log(response);
-          setErrorMessage("Not yet implemented.");
+          const response: backendResponse = await invoke('new_selection', {selection: file.payload});
+          displayMedia(response.content);
         }
     };
   
