@@ -120,8 +120,10 @@ fn save(index: usize) -> serde_json::Value {
 #[tauri::command]
 fn new_selection(selection: Vec<String>) -> serde_json::Value {
     let selected_medias: Vec<Multimedia> = list_selection(selection);
+    println!("\n___");
+
     for media in &selected_medias {
-        println!("media: {}", media.name);
+        println!("media: {}\t path: {:#?}", media.name, media.path);
     }
 
     // Append selected_medias to ALL_SELECTIONS
@@ -143,9 +145,6 @@ fn new_selection(selection: Vec<String>) -> serde_json::Value {
     {
         let local_references = LOCAL.lock().unwrap();
         println!("Contents of LOCAL:");
-        for media in &*local_references {
-            println!("Name: {}, Content: {}", media.name, media.content);
-        }
     }
 
     // Return the first element of LOCAL
