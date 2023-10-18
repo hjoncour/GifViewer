@@ -66,7 +66,6 @@ Other:
 selected paths: multiple: can return multiple paths?
 
 Next:
-- Remove print content when drag & drop
 - put file encoding in a separate thread so when drag & dropping multiple files we get instant response from the backend
-- move backend response type outside of app.tsx
 - return full object multimedia instead of fields
+- 
